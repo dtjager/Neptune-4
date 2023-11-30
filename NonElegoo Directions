@@ -1,0 +1,540 @@
+HalfManBear - OpenNept4une 
+De Elegoo-izing the Neptune 4 Series 3D Printers
+NOTE the Elegoo touchscreen will not be functional after this.
+On V1.1 Boards extra config required for LED functions (see Discord pinned)
+
+Printer Terminal Access Options:
+SSH (Requires ethernet connection) - 
+
+ssh root@printer ip
+Password = makerbase
+User: mks is a sudoer also and can login via - mks:makerbase
+—---------------------------------------------
+Serial terminal access (Without Ethernet) -
+
+Connect N4P USB-C port to PC Then connect via Serial COM8 (yours will be different) set baudrate to 1500000
+
+User: root
+Pass: makerbase
+—--------------------------------------------
+
+Method 1: Re-flash eMMC with fresh Updated Armbian OS (Pre-Loaded) 
+
+(Method 2: further in is a manual config that doesn't require an eMMC reader)
+
+Requires - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module 
+https://www.aliexpress.com/item/1005005614719377.html
+
+Alternatively, a spare eMMC & eMMC > microSD adapter can be purchased (Preferred as can retain the original eMMC as an Elegoo Official loaded backup.
+https://www.aliexpress.com/item/1005005549477887.html
+
+Image Links - Check youe PCB Version (Written on the Control Board):  
+
+Neptune 4 & Pro PCB V1.0:
+
+Neptune 4 & Pro PCB V1.1:
+
+Neptune 4 Plus & Max PCB V1.1: UNTESTED - SPI/ADXL may not work 
+
+Configured default for N4Pro 1.2A (replace printer.cfg with latest printer.cfg to match your model) - flash images with balenaEtcher or dd.
+OrcaSlicer Configs: (For N4P configure Orca defaults for your model printer before import)
+OrcaConfigs - (Remove reference to the Pro if trying to import for a standard Neptune 4 profile)
+After editing configs or calibrating, save in the fluidd interface, then in fluidd select the top right menu > Host > reboot. Avoid direct power cycles; this ensures changes save from RAM to eMMC. 
+Image Features:
+
+Armbian 23.08.0-trunk Bookworm with bleeding edge Linux 6.5.9-edge-rockchip64 (Credit: https://github.com/redrathnure/armbian-mkspi)
+Elegoo Services Removed (No Z-Axis Issues) and Klipper v0.12 installed
+KAMP configured and Installed (Creates a smaller, print area localised bed level mesh before each print + Smart Park + Line Purge) https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging
+Bed Leveling Macros (Bed Screw Tuning macro, Z Probe Calib & Auto Full Bed Mesh)
+PID Calibration Macros (Extruder + Improved for both heated bed segments)
+Easy WiFi config
+Working segmented bed heaters (N4Pro) - also configurable
+Armbian packages updated (as of Nov 2023) 
+No need for Elegoo Firmware Updates going forward (Stock Klipper etc Updated in Fluidd GUI or Kiauh)
+Crowsnest Current (Main) w/ ustreamer 
+Orca Slicer Profiles Provided
+Simplified printer.cfg 
+(Credit: Modified SmartHome42/Printernbeer & Tom's Basement Neptune 4 Config)
+Renamed variables to make it easier to read
+Corrected instructions for Flashing v0.12 Klipper MCU Firmware 
+Firmware Retraction configured
+E & Z Steppers configured for 64 microsteps / Interpolation Disabled & stealthChop disabled (Results in higher accuracy without sacrificing much stepper torque)
+X & Y Steppers remain at 16 microsteps with Interpolation enabled & stealthChop enabled (16 microsteps with interpolation is a common setting, providing a balance of torque and resolution and low noise)
+Mellow Fly-ADXL345 USB Accelerometer configuration included [include adxl.cfg]
+
+Installed Services (Clean Official) - Current as of NOV 2023:
+Klipper 
+moonraker 
+Klipper-Adaptive-Meshing-Purging v
+fluidd 
+mainsail (Configured on port 81)
+crowsnest 
+mobileraker
+
+Post Flash Requirements:
+
+Replace printer.cfg with the latest custom cfg for your printer model (Even if you have the default N4Pro 1.2A) 
+Download the correct printer.cfg for your model. 
+Paste this over the current printer.cfg in fluidd then click Save & Restart after this be sure to (still in fluidd) select the top right menu > Host > reboot
+
+Slicer Settings 
+(If using the provided OrcaConfigs profiles (N4P) you can skip this)
+
+Slicer START CODE (OrcaSlicer) TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor] 
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
+
+—---------------------------------------------------------
+
+Slicer PRINT END CODE (Use for all Slicers)
+
+PRINT_END
+
+—---------------------------------------------------------
+Slicer START CODE (PrusaSlicer) TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor]
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[first_layer_bed_temperature] EXTRUDER_TEMP=[first_layer_temperature] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
+—---------------------------------------------------------
+
+Slicer START CODE (Cura) UN-TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = {machine_nozzle_size}
+;Filament type = {material_type}
+;Filament name = {material_brand}
+;Filament weight = {material_density}
+PRINT_START BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0} AREA_START={print_min_x},{print_min_y} AREA_END={print_max_x},{print_max_y}
+
+—---------------------------------------------------------
+
+Printer SSH / Terminal Configurations:
+
+Set Time Zone
+
+sudo armbian-config 
+
+> Personal > Timezone (Set to yours)
+
+—---------------------------------------------------------
+
+Wifi Config for OpenNept4une Image
+ip a 
+(to find your wlan adapter number use for autoconnect command below)
+sudo nmtui
+sudo nmcli device set wlan0 autoconnect yes 
+sudo reboot
+—---------------------------------------------------------
+
+Webcam Config
+
+Edit crowsnest.conf
+
+Set the correct video device number (look in crowsnest.log for the correct number)
+device: /dev/video 1,2,3,4 etc
+
+Alter resolution and framerate as required
+—---------------------------------------------------------
+Fluidd / Klipper Calibration: - 
+Update machine IP if using Orca (wifi symbol, right of printer profile)
+You will need to run the following Macros as your machine values will differ. After testing this image (ideally OrcaSlicer with the provided profiles N4P) you can update the printer.conf speeds and accel limits to your preferred slicer settings if this is too slow for you 250mm/s.
+
+Config / Tuning Macros below (found pre-configured in Fluidd | BedTune/Level macros will begin after heating- do Probe Z Offset cold):
+
+BED_LEVEL_SCREWS_TUNE
+https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe (Run macro again after each round of corrections)
+CALIBRATE_PROBE_Z_OFFSET 
+(Paper Thickness Test. When you determine a value, click Accept and run a SAVE_CONFIG command after)
+AUTO_FULL_BED_LEVEL 
+(Not really required as using KAMP meshes before print, but useful to see how level the whole bed is - Click Save Config & Restart after)
+—----------------------
+
+(Note: Do each of these separately and from a low temp not whilst hot if Non Pro only do the inner bed PID macro after tuning the extruder)
+
+PID_TUNE_EXTRUDER
+PID_TUNE_INNER_BED
+PID_TUNE_OUTER_BED
+—----------------------
+Pressure advance value will need your own data.
+https://www.klipper3d.org/Pressure_Advance.html
+
+Input shaping values will also need your own data 
+https://www.klipper3d.org/Resonance_Compensation.html
+(Mellow Fly-ADXL345 Pre Configured for tuning)
+
+After editing configs or calibrating, save in the fluidd interface, then in fluidd select the top right menu > Host > reboot. Avoid direct power cycles; this ensures changes save from RAM to eMMC. 
+—---------------------------------------------------------
+Advised to Update MCU Klipper FW Versions
+Guide:
+How to dump/flash MCU Firmware
+
+—------------------------------------------------END OF METHOD 1-----------------------------------------------
+Method 2: Removing Elegoo Services, Scripts & Configs - (No eMMC reader required) 
+ 
+Note Doesn't include all of the features of Method 1 - latest kernel etc 
+(I would only recommend it if you’re comfortable with Linux)
+Your Touch-Screen won't operate after this modification
+(See recovery folder for N4Pro 1.2A Version if all goes wrong):Recovery Neptune4 Pro (1.2A) eMMC 
+
+Configured default for N4Pro 1.2A (see other / latest printer.cfg to match your model)
+ 
+Install Improvements by DanDoughnut 
+BACKUP ANY CONFIG FILES BEFORE DOING THIS AS WILL CLEAR THEM AND INSTALL NEW ONES (With KAMP + Extras configured) 
+
+If at any point during the installation, you notice the machine LEDs turn on by themselves check to ensure the bed/extruder isn't auto-heating. 
+!if the heating doesn't stop then power off the machine! (NOTE: This has been fixed just a precaution)
+
+OrcaSlicer profiles OrcaConfigs (For N4P configure Orca defaults for your printer before import. Remove reference to the Pro if trying to import for a standard Neptune 4)
+
+—---------------------------------------------
+
+General Conf
+Login via ssh or serial mks:makerbase NOT ROOT
+
+sudo armbian-config 
+> Personal > Timezone (Set to yours)
+
+Go back to the main config page (escape key)
+
+(escape key)
+
+Note your ip address with 
+sudo ifconfig
+
+—-----------------------
+
+
+!Be mindful of the bed & extruder temperature if it begins to increase on its own! 
+(NOTE: This has been fixed just a precaution)
+
+Download installer script - mks - password is - makerbase
+
+su mks
+
+cd /home/mks
+
+wget 'https://pastebin.com/raw/g8FgJM9L' -O de-elegoo-easy-script.sh
+
+sed -i 's/\r$//' de-elegoo-easy-script.sh 
+
+chmod +x de-elegoo-easy-script.sh
+
+./de-elegoo-easy-script.sh
+
+After removing the elegoo files and updating packages it will open network-manager so you can configure WiFi.
+
+Select EXIT once you are done (or EXIT if no config is required).
+
+Now you will be in the kiauh menu - continue in the next section. 
+
+Installing latest Klipper / Moonraker
+
+Select Remove(Opt 3) (remove the following even if not showing as installed)
+
+Remove: klipper, moonraker, fluidd, fluid-config, klipper-screen, crowsnest
+
+Go back out of the “remove” menu (B) to the main kiauh page
+
+Install (Opt 1 Main Page) 
+
+Install Klipper(Default-Python3) then Moonraker then fluidd (Say yes to macros).
+
+after this, you can install any others you want (DONT INSTALL MJPG OR CROWSNEST)
+(don't run Mainsail on the same port as Klipper if asked use 81 for example) 
+
+Finally, go back out of the install menu to the main kiauh page
+
+Check for Updates (Opt 2 Main Page) 
+then
+Update All (Opt a)
+Quit out of kiauh (B, Enter then Q, Enter) 
+sudo reboot (then power cycle the machine after a few minutes)
+Replace printer.cfg with a custom one for your model (Unless you have a N4Pro 1.2A) 
+Download the correct printer.cfg for your model. 
+Paste this over the current printer.cfg in fluidd then click Save & Restart after this be sure to (still in fluidd) select the top right menu > Host > reboot
+
+Slicer Setting Requirements:
+(If using the provided OrcaSlicer profiles (N4P) you can skip this)
+
+Slicer START CODE (OrcaSlicer) TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor] 
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
+
+—---------------------------------------------------------
+
+Slicer PRINT END CODE (Use for all Slicers)
+
+PRINT_END
+
+—---------------------------------------------------------
+
+Slicer START CODE (PrusaSlicer) TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor]
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[first_layer_bed_temperature] EXTRUDER_TEMP=[first_layer_temperature] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]} 
+
+—---------------------------------------------------------
+Slicer START CODE (Cura) UN-TESTED - 
+NOTE all text including PRINT_START and after must be on one line (Slicer will auto drop it to the next line but important you don't hit enter yourself)
+
+;Nozzle diameter = {machine_nozzle_size}
+;Filament type = {material_type}
+;Filament name = {material_brand}
+;Filament weight = {material_density}
+PRINT_START BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0} AREA_START={print_min_x},{print_min_y} AREA_END={print_max_x},{print_max_y}
+
+
+
+Fluidd / Klipper Calibration: - 
+Update machine IP if using Orca (wifi symbol, right of printer profile)
+You will need to run the following Macros as your machine values will differ. After testing this image (ideally OrcaSlicer with the provided profiles (N4P)) you can update the printer.conf speeds and accel limits to your preferred slicer settings if this is too slow for you 250mm/s.
+Access Fluuid from a web browser with your printer’s IP - might need to refresh page. 
+Config / Tuning Macros below (found pre-configured in Fluidd | BedTune/Level macros will begin after heating- do Probe Z Offset cold):
+
+BED_LEVEL_SCREWS_TUNE
+https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe (Run macro again after each round of corrections)
+CALIBRATE_PROBE_Z_OFFSET 
+(Paper Thickness Test. When you determine a value, click Accept and run a SAVE_CONFIG command after)
+AUTO_FULL_BED_LEVEL 
+(Not really required as using KAMP meshes before print, but useful to see how level the whole bed is - Click Save Config & Restart after)
+—----------------------
+
+(Note: Do each of these separately and from a low temp not whilst hot if Non Pro only do the inner bed PID macro after tuning the extruder)
+
+PID_TUNE_EXTRUDER
+PID_TUNE_INNER_BED
+PID_TUNE_OUTER_BED
+—----------------------
+Pressure advance value will need your own data (Also input shaping)
+https://www.klipper3d.org/Pressure_Advance.html
+Input shaping values will also need your own data.
+https://www.klipper3d.org/Resonance_Compensation.html
+
+Set Time Zone
+
+sudo armbian-config 
+
+> Personal > Timezone (Set to yours)
+
+After editing configs or calibrating, save in the fluidd interface, then in fluidd select the top right menu > Host > reboot. Avoid direct power cycles; this ensures changes save from RAM to eMMC. 
+—------------------------
+
+Advised to Update MCU Klipper FW Versions ADVANCED 
+
+Guide:
+How to dump/flash MCU Firmware
+
+—---------------------------------------------------------
+
+Getting Webcam / Crowsnest to work
+
+su mks
+
+cd ~
+
+git clone https://github.com/jacksonliam/mjpg-streamer.git
+
+cd mjpg-streamer/mjpg-streamer-experimental/
+
+make
+
+sudo make install
+
+sudo nano /usr/local/bin/webcamd
+
+- Change the following lines 
+
+MJPGSTREAMER_HOME=/home/mks/mjpg-streamer/ 
+
+- To 
+
+MJPGSTREAMER_HOME=/home/mks/mjpg-streamer/mjpg-streamer-experimental
+
+- And 
+
+config_dir=/home/mks/klipper_config 
+
+- To 
+
+config_dir=/home/mks/printer_data/config
+
+Save (ctrl-x) and sudo reboot
+
+re-login as mks
+
+cd ~
+
+rm -rf crowsnest
+
+git clone -b legacy/v3 https://github.com/mainsail-crew/crowsnest.git
+
+cd ~/crowsnest
+
+sudo make install
+
+reboot
+
+After successful installation, you should consider to add (below) to your moonraker.conf, to get latest and possibly greatest features.
+
+
+[update_manager crowsnest]
+type: git_repo
+path: ~/crowsnest
+origin: https://github.com/mainsail-crew/crowsnest.git
+primary_branch: legacy/v3
+install_script: tools/install.sh
+
+
+—-------------------
+
+view crowsnest.log in fluidd 
+
+Note the correct video device number in the log 
+(eg -  /dev/v4l/by-id/usb-GENERAL_GENERAL_WEBCAM_JH0319_20210712_v102-video-index0 -> /dev/video4)
+
+
+Edit the crowsnest.conf
+Set
+
+device: /dev/video 1,2,3,4 etc
+
+Alter resolution and framerate as required
+
+Click Save 
+
+sudo reboot 
+
+
+—------------------------------------------------END OF LINE------------------------------------------------
+
+
+Safely Syncing Cached Data to Disk
+
+The `sync` command is crucial for ensuring that data cached in RAM is properly written to disk. Here's why this is essential, especially before abruptly powering off:
+
+Data Integrity: 
+Cached data in RAM can be lost if not synced, potentially leading to file corruption or even system corruption.
+
+Consistency: Changes you've made might not be saved, and thus won't appear after a reboot.
+
+Safety: Abruptly turning off the power without syncing can cause unpredictable system behaviour. Using `sync` ensures that all data is safely saved to storage.
+
+How to Safely Power Off:
+
+After making system changes (like editing `printer.cfg` in Fluidd), before switching off your machine, ensure you've synced data by doing the following:
+
+Reboot the system via Fluidd interface (top right … menu > Host > reboot)
+
+After the reboot, you are then safe to power off at the mains.
+
+If Fluidd host reboot/shutdown commands don’t work
+Try running the following via SSH (user mks)
+./moonraker/scripts/sudo-fix.sh
+
+
+Setting Up Automatic Sync on Armbian:
+
+To ensure consistent data syncing, consider scheduling the `sync` command to run automatically at regular intervals, such as every 10 minutes.
+
+1. Open the User's Crontab (Ensure you are user mks, not root)
+
+In the terminal, type:
+
+   crontab -e
+
+This will prompt you to select an editor (like `nano`). Once open, you'll be editing the crontab for the current user.
+
+2. Add the Sync Command:
+
+Navigate to the end of the file and insert the following line (if not already present):
+
+*/10 * * * * /bin/sync
+   
+Explanation:
+
+*/10: Execute every 10 minutes.
+* * * *: This denotes the command should run every hour of every day of every month, regardless of the weekday.
+
+3. Save and Exit:
+- Press `CTRL + O` to save the changes.
+- Press `Enter` to confirm.
+- Then, press `CTRL + X` to exit.
+
+4. Verify Your Changes:
+
+To check your new crontab entries, use:
+
+crontab -l
+
+This command will display the scheduled tasks, including the `sync` command set to run every 10 minutes.
+
+With this setup, you can have peace of mind, knowing that even if you forget to manually run `sync`, your system will do it for you at least every 10 minutes. 
+
+However, always allow for at least 10 minutes after your last change before turning off your 3D printer.
+
+Configuring Macro with G-Code Shell Command: 
+(not really necessary if you have a 10min cron configured)
+https://github.com/dw-0/kiauh/blob/master/docs/gcode_shell_command.md
+
+1. Access SSH / Serial Terminal:
+  
+   su mks
+
+   /home/mks/kiauh/kiauh.sh
+   
+
+2. Navigate through Kiauh Menu:
+   - Choose `4. Advanced`
+   - Select `8. Gcode Shell Command`
+   - Confirm with `Yes` for installation.
+   - Confirm with `Yes` to generate an example shell command.
+   - Press `B` then `Q` to exit.
+
+3. Edit the Configuration:
+   
+   nano /home/mks/printer_data/config/shell_command.cfg
+   
+   Replace content with:
+ —----------------------------------
+
+   [gcode_shell_command SYNC_SYSTEM]
+   command: sync
+   timeout: 2
+   verbose: TRUE
+   [gcode_macro RUN_SYNC]
+   gcode:
+       RUN_SHELL_COMMAND CMD=SYNC_SYSTEM
+
+ —----------------------------------
+
+   - Save with `CTRL + O`, `Enter`.
+   - Exit with `CTRL + X`.
+
+4. Update Printer Configuration in Fluidd:
+   - Open `printer.cfg`.
+   - Ensure `[include shell_command.cfg]` is added at the top.
+   - Click 'Save & Restart'.
+
+5. Run the Macro in Fluidd:
+
+After saving configuration changes, enter `RUN_SYNC` in the console.
+
+Now, you should be able to run the `RUN_SYNC` macro whenever needed.
