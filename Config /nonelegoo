@@ -40,11 +40,11 @@ restart_method: command
 
 [printer]
 kinematics:cartesian
-max_velocity: 250
-max_accel: 3100
-max_accel_to_decel: 3100
+max_velocity: 500
+max_accel: 3500
+max_accel_to_decel: 3000
 max_z_velocity: 20
-max_z_accel: 200
+max_z_accel: 100
 square_corner_velocity: 5.0
 
 [virtual_sdcard]
@@ -67,7 +67,7 @@ endstop_pin:PC0
 position_min: -4  
 position_endstop: -4
 position_max: 235
-homing_speed:50
+homing_speed:70
 homing_retract_dist:5
 homing_positive_dir:false
 step_pulse_duration:0.000002
@@ -83,7 +83,7 @@ endstop_pin:PB8
 position_min: -2
 position_endstop:-2 
 position_max:235
-homing_speed:50
+homing_speed:70
 homing_retract_dist:5
 homing_positive_dir:false
 step_pulse_duration:0.000002
@@ -104,7 +104,7 @@ endstop_pin:probe:z_virtual_endstop ## PB12 for Z-max; endstop have'!' is NO
 #position_endstop:-5
 position_max: 268
 position_min: -5
-homing_speed: 8
+homing_speed: 20
 second_homing_speed: 3
 
 
@@ -161,9 +161,9 @@ sensor_type:NTC 100K MGB18-104F39050L32
 sensor_pin: PA1
 max_power: 1
 control = pid
-pid_kp = 25.825
-pid_ki = 1.979
-pid_kd = 84.254
+#pid_kp : 26.213 
+#pid_ki : 1.304
+#pid_kd : 131.721 
 pressure_advance: 0.02725
 pressure_advance_smooth_time: 0.02
 max_extrude_cross_section: 5 	#standard klipper default 4* (NozzleDiam^2)
@@ -204,7 +204,7 @@ max_power: 1.0
 control = pid
 pid_kp = 68.601
 pid_ki = 1.550
-pid_kd = 758.895
+pid_kd = 858.895
 min_temp: 0
 max_temp: 120 
 
@@ -234,10 +234,10 @@ shutdown_speed: 1
 #####################################################################
 
 [input_shaper]
-shaper_freq_x: 68.4   
-shaper_freq_y: 45.6
-shaper_type_x: mzv
-shaper_type_y: mzv
+shaper_freq_x: 111   
+shaper_freq_y: 52.2
+shaper_type_x: zv
+shaper_type_y: 2hump_ei
 
 
 ####################################################################
